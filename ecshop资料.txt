@@ -1,4 +1,4 @@
-ecshop
+     ****ecshop
 
 1.导航栏里面读取数据来源	
 	$navigator_list		includes/lib_main.php
