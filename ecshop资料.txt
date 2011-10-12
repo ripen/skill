@@ -1,0 +1,110 @@
+ecshop
+
+1.导航栏里面读取数据来源	
+	$navigator_list		includes/lib_main.php
+
+2.在修改底部文件的时候会触发一个js文件，导致页面上会随机产生    Powered by ECShop 字样
+	去掉方法	：去掉js/common.js 文件下的onload方法（大概在261行左右）
+	
+3.<title></title>里边包含Powered by ECShop字样的去掉方法
+	修改includes/lib_main.php文件 （大概在143行） 去掉其里边的Powered by ECShop字样就可以了
+
+3.版权信息还存在与语言包里面（Powered by ECShop）
+	修改方法：languages/XX/common.php(大概在555行，该字样是分开来写的)去掉其中的显示就可以了
+	
+4.获取文章分类下的文章列表可以直接使用其写好的方法get_cat_articles($cat_id);
+	方法所在目录为：includes/lib_article.php文件
+	
+5.关闭页面缓存 includes/cls_template.php 大概在198行将其判断注释掉即可
+
+6.ECSHOP 设置伪静态的最简单的方法 
+	1).首先你的空间必须支持伪静态
+	2).网站的根目录下有一个htaccess.txt文件，将其改为.htaccess
+	3).进入ECSHOP的后台修改，设置伪静态		在后台  商店设置 > 基本设置  >  URL重写> 选上 简单重写
+	4).网站的导航部分的连接没有实现伪静态，这就需要你到后台自定义导航里面去手动把它改成静态地址了
+	
+7.解决ecshop用户登录时用户名，邮箱都可作为登录条件方法
+	修改登录方法（login()） 目录：includes/modules/integrates/integrate.php	大概在145行
+	修改方法：在该方法的开始处添加如下的条件
+		if(is_email($username))
+		{
+			$sql = "select ".$this->field_name." from ".$this->table($this->user_table)." where ".$this->field_email."='".$username."'";
+			$username = $this->db->getOne($sql);
+			if(!$username) return false;
+			//echo $sql;exit;
+		}
+8.商品也弹出 transport.js/run() error:undefined原因
+	（1）首先找到445-447行发现了这两句：
+	/* 定义两个别名 */
+	var Ajax = Transport;
+	Ajax.call = Transport.run;
+	（2）然后再找到735发现了这句：
+	Ajax.onRunning = showLoader;
+	哈哈....其实问题就是出在这句的showLoader函数里面。因为在该函数里753行有这段语句
+	if ( ! obj && process_request)，而出现上述问题就是说变量process_request没有定义！！
+	（3）为什么说该变量没有定义呢？
+	原因很简单，因为EC很多时候都是将这句话：
+	<script type="text/javascript">
+	var process_request = "{$lang.process_request}";
+	.....
+	</script>
+	放在最后面的....在中途有其他什么处理、JS载入、JS运行而还没运行到最下面的时候当然就出现在上述的错误!!!
+	process_request这个变量到底有什么用呢？其实就是为了创建一个DIV层显示“正在处理您的请求...”这个信息！！
+	
+	这样写是为了可以支持多语言
+	
+	解决办法：
+	（１）在showLoader函数体里面加入这句var process_request = '正在处理您的请求...';英文的话就改成英文了。。。
+	（２）将var process_request = "{$lang.process_request}";这句话放在<header>下面的<script>里面
+	（３）重新定义Ajax.onRunning这一事件例如可以自己新建一个函数run,Ajax.onRunning = run
+	
+	第二种方法：对于这个问题，官方管理员的回复是”有时ajax抓取订单信息不全，出现这样的错误信息，
+		但这个不会影响您的正常使用，请您放心。如果要关闭，可以在后台里的商店设置 基本设置中去除。”，实际上，按照官方这个说法，问题还是照样存在，解决的办法是“眼不见，心不烦”，
+		将这条弹出语句注释掉： 找到js/transport.js，第227行: alert(this.filename + "/run() error:" + ex.description); 复制代码将之改为： /* alert(this.filename + "/run() error:" + ex.description); */ 复制代码
+		
+		
+ecshop发货时不考虑库存(还可以直接在后台管理 不启用库存)
+	修改文件：includes/lib_order.php(大概在1083行)
+	注释掉如下代码：
+	if ($num > $goods['goods_number']){
+        $GLOBALS['err']->add(sprintf($GLOBALS['_LANG']['shortage'], $goods['goods_number']), ERR_OUT_OF_STOCK);
+		return false;
+	}
+	更新购物车是不考虑库存
+		flow.php(大概在2206，2219行)注释掉
+		show_message(sprintf($GLOBALS['_LANG']['stock_insufficiency'], $row['goods_name'],
+				$row['goods_number'], 	$row['goods_number']));
+        exit;
+	
+ecshop 提交订单时无法选择货到付款选项，
+		原因：ecshop中，默认的配送方式中，有的是不支持货到付款的，如果选取该配送方式的话，就不能选取货到付款选项
+		修改方法：includes/modules/shipping 下面存放的是一些配送方式，
+		可以修改此配送方式下的 配送方式是否支持货到付款 即可
+		
+		
+
+ecshop添加后台自定义模版步骤：（自己新添加的模版 假如自己建立了一个test.dwt 的模版）
+	1.	首页找到ecshop的语言包(language/zh_cn/admin/template.php),大概在41行左右添加
+		$_LANG['template_files']['test']	=	'测试内容模版';
+		目的：这样在后台设置模版里面就可以看见刚才添加的选项
+	2.	打开根目录下的 admin/includes/lib_template.php (大概在22行)
+		在这里的$template_files数组中添加自己新建的dwt文件名 eg:	test.dwt
+	3.	打开根目录下的 admin/includes/lib_template.php (大概在54行)
+		在这里的$page_libs添加数组
+		里面的项目库可以看自己需要而添加
+	4.	在模版目录下查找libs.xml (themes/default/libs.xml)合适位置添加：
+			<file name="article_cat_story.dwt">
+				<region name="测试模版"/>
+			</file>
+	通过这四个步骤就可以实现在后台对模版的编辑，但是在模版中需要添加可编辑区域才可代码如下
+		<!-- TemplateBeginEditable name="广告位" -->
+
+		<!-- TemplateEndEditable -->
+	
+屏蔽ecshop不需要的功能(就是后台菜单页面，有的东西是我们不需要的，可以去掉)
+	方法所在目录为：admin/includes/inc_menu.php
+	文件里面的内容就是后台菜单显示的内容，那些不需要的可以直接注释后者删除掉
+		
+		
+		
+		
