@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>click</title>
+<link href="./css/dialog.css" rel="stylesheet" type="text/css" />
+<script language="javascript" type="text/javascript" src="./js/jquery.min.js"></script>
+<script language="javascript" type="text/javascript" src="./js/dialog.js"></script>
+</head>
+<script>
+	$(function(){
+		$('.a').click(function(){
+			window.top.art.dialog({lock:true,title:"notice", id:'affirm', 
+			iframe:'./text.html',width:'1000px', height:'520px',yesText:'xxx'}, function(){
+				
+			});
+		})
+
+		$('.a2').click(function(){
+			window.top.art.dialog({id:'add',iframe:'./type_add.tpl.php', title:'notice', width:'550', height:'300'});
+		})
+		
+	})
+</script>
+<body id="index">
+
+<div class="wrap">
+    <!-- <h1><a href="javascript:window.top.art.dialog({id:'add',iframe:'?m=message&c=message&a=message_send', title:'notice', width:'550', height:'300'}, function(){var d = window.top.art.dialog({id:'add'}).data.iframe;var form = d.document.getElementById('dosubmit');form.click();return false;}, function(){window.top.art.dialog({id:'add'}).close()});void(0);">click</a></h1> -->
+	<h1><a class="a">click</a></h1><h1><a class="a2">click2</a></h1>
+</div>
+
+</body>
+</html>
